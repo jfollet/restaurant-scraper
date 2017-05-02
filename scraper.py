@@ -1,9 +1,7 @@
-from bs4 import BeautifulSoup
-import geocoder
-import json
-import pathlib
 import re
+
 import requests
+from bs4 import BeautifulSoup
 
 INSPECTION_DOMAIN = 'http://info.kingcounty.gov'
 INSPECTION_PATH = '/health/ehs/foodsafety/inspections/Results.aspx'
@@ -38,16 +36,26 @@ def get_inspection_page(**kwargs):
       * make a request to the inspection service search page using this query
       * return the unicode-encoded content of the page
     """
-    
-    pass
+
+    arguments = INSPECTION_PARAMS.copy()  # Use the kwargs dictionary to replace the defaults arguments in arguments
+    for key, val in kwargs.items():
+        if key in INSPECTION_PARAMS:
+            arguments[key] = val
+
+    # Combine the domain and path to make the URL the URL
+    url = INSPECTION_DOMAIN + INSPECTION_PATH
+
+    resp = requests.get(url, params=arguments)
+
+    return resp.text
 
 
 def parse_source(html):
     """
     Returns a BeautifulSoup object, given the html
     """
-    
-    pass
+
+    return BeautifulSoup(html, "html5lib")
 
 
 def restaurant_data_generator(html):
@@ -55,8 +63,9 @@ def restaurant_data_generator(html):
     Given a BeautifulSoup instance return a find_all generator
     with only the restaurant data divs.
     """
-    
-    pass
+
+    id_finder = re.compile(r'PR[\d]+~')
+    return html.find_all('div', id=id_finder)
 
 
 def has_two_tds(elem):
@@ -64,7 +73,7 @@ def has_two_tds(elem):
     Predicate which reports if a BeautifulSoup element is a table
     row which has exactly two tds.
     """
-    
+
     pass
 
 
@@ -73,7 +82,7 @@ def clean_data(td):
     Given a td, return its text, after stripping away newlines, spaces,
     colons, and dashes.
     """
-    
+
     pass
 
 
@@ -94,4 +103,10 @@ def result_generator(count):
 
 
 if __name__ == '__main__':
-    pass
+    results = get_inspection_page(Inspection_Start="12/7/2001",
+                                  Inspection_End="12/7/2002"
+                                  )
+    parsed = parse_source(results)
+    info_divs = restaurant_data_generator(parsed)
+
+    print(info_divs)
